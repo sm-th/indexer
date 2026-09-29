@@ -30,7 +30,7 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: sm-th/indexer@v1
@@ -129,7 +129,7 @@ Chunk points (`kind = "chunk"`):
 |---|---|
 | `repository`, `scope`, `path` | Source namespace. Always filter searches by `kind` and usually by `repository`. |
 | `commit` | Revision at which this file's current content was indexed (its content equals `HEAD`'s). |
-| `title`, `headings`, `heading`, `anchor` | Document title, heading breadcrumb, deepest heading, GitHub heading anchor. |
+| `title`, `headings`, `heading`, `anchor` | Document title, heading breadcrumb shared by the whole chunk, its deepest heading, and the GitHub anchor of the heading where the chunk starts. |
 | `chunk_index`, `chunk_count`, `start_line`, `end_line` | Position within the file (1-based lines). |
 | `text` | Raw chunk text (verbatim span of the file). |
 | `source_url` | `https://github.com/<repo>/blob/<commit>/<path>#<anchor>`. |

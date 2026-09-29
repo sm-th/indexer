@@ -71,10 +71,14 @@ outputs:
     description: Renamed files.
   files-deleted:
     description: Files whose points were removed.
+  files-unchanged:
+    description: Selected files skipped because their content hash did not change.
   chunks-embedded:
     description: Chunks sent to the embedding model.
   chunks-reused:
     description: New points written with vectors reused from identical stored chunks.
+  chunks-updated:
+    description: Unchanged chunks of changed files kept in place (payload refreshed, no embedding).
   chunks-deleted:
     description: Stale points deleted.
   state-written:

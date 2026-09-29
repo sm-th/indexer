@@ -24,7 +24,7 @@ import tiktoken
 from chonkie import RecursiveChunker
 from chonkie.tokenizer import Tokenizer as ChonkieTokenizer
 
-MARKDOWN_CHUNKER_VERSION = "markdown-v2"
+MARKDOWN_CHUNKER_VERSION = "markdown-v3"
 
 _FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 _ATX_RE = re.compile(r"^ {0,3}(#{1,6})(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$")
@@ -176,7 +176,7 @@ class MarkdownChunker:
             pieces.extend(self._split_blocks(text, node.start, node.body_end, node.headings, node.anchor))
         for child in node.children:
             pieces.extend(self._emit(text, child))
-        packed = self._pack(text, pieces, node.headings, node.anchor)
+        packed = self._pack(text, pieces)
         # A heading with no intro text leads into its first subsection instead of standing alone.
         if (
             len(packed) > 1
@@ -188,10 +188,8 @@ class MarkdownChunker:
         # Fragments of a split section must not be glued onto neighbouring sections.
         return [_Piece(p.start, p.end, p.headings, p.anchor, mergeable=False) for p in packed]
 
-    def _pack(
-        self, text: str, pieces: list[_Piece], headings: tuple[str, ...], anchor: str | None
-    ) -> list[_Piece]:
-        """Merge runs of adjacent whole pieces that fit together under the parent heading."""
+    def _pack(self, text: str, pieces: list[_Piece]) -> list[_Piece]:
+        """Merge runs of adjacent whole pieces that fit together under their common heading."""
         out: list[_Piece] = []
         for piece in pieces:
             prev = out[-1] if out else None
@@ -202,9 +200,9 @@ class MarkdownChunker:
                 and prev.end == piece.start
                 and self._tokens(text[prev.start : piece.end]) <= self.max_tokens
             ):
+                # Breadcrumb: what all packed sections share. Anchor: where the chunk starts, so links land on it.
                 common = _common_prefix(prev.headings, piece.headings)
-                merged_anchor = prev.anchor if common == prev.headings else anchor if common == headings else None
-                out[-1] = _Piece(prev.start, piece.end, common, merged_anchor, mergeable=True)
+                out[-1] = _Piece(prev.start, piece.end, common, prev.anchor, mergeable=True)
             else:
                 out.append(piece)
         return out
@@ -232,7 +230,7 @@ class MarkdownChunker:
                 c_start = first if i == 0 else b_start + c.start_index
                 # Same section: _pack below may re-fill fragments up to the budget.
                 pieces.append(_Piece(c_start, b_start + c.end_index, headings, anchor, mergeable=True))
-        return self._pack(text, pieces, headings, anchor)
+        return self._pack(text, pieces)
 
 
 def _frontmatter(text: str) -> tuple[int, str | None]:

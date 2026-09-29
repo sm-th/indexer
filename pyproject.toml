@@ -1,6 +1,6 @@
 [project]
 name = "qdrant-md-sync"
-version = "1.0.1"
+version = "1.0.2"
 description = "GitHub Action / CLI that keeps a repository's Markdown files synchronized into a Qdrant collection"
 readme = "README.md"
 authors = [
