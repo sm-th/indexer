@@ -24,7 +24,7 @@ import tiktoken
 from chonkie import RecursiveChunker
 from chonkie.tokenizer import Tokenizer as ChonkieTokenizer
 
-MARKDOWN_CHUNKER_VERSION = "markdown-v1"
+MARKDOWN_CHUNKER_VERSION = "markdown-v2"
 
 _FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 _ATX_RE = re.compile(r"^ {0,3}(#{1,6})(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$")
@@ -165,7 +165,11 @@ class MarkdownChunker:
         if not text[node.start : node.end].strip():
             return []
         if self._tokens(text[node.start : node.end]) <= self.max_tokens:
-            return [_Piece(node.start, node.end, node.headings, node.anchor, mergeable=True)]
+            # A document that is just one top-level section belongs to that section's heading.
+            lead = node
+            while len(lead.children) == 1 and not text[lead.start : lead.body_end].strip():
+                lead = lead.children[0]
+            return [_Piece(node.start, node.end, lead.headings, lead.anchor, mergeable=True)]
 
         pieces: list[_Piece] = []
         if text[node.start : node.body_end].strip():
