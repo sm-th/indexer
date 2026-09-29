@@ -1,0 +1,103 @@
+name: Qdrant Markdown Sync
+description: Keep a repository's Markdown files synchronized into an existing Qdrant collection on every push.
+author: sm-th
+branding:
+  icon: database
+  color: red
+
+inputs:
+  qdrant-url:
+    description: Qdrant endpoint URL.
+    required: true
+  qdrant-api-key:
+    description: Qdrant API key with write access to the collection.
+    required: false
+  collection:
+    description: Existing collection to write into (the Action does not create it).
+    required: true
+  repository:
+    description: Repository namespace stored on every point.
+    default: ${{ github.repository }}
+  scope:
+    description: Source scope stored on every point (usually the branch).
+    default: ${{ github.ref_name }}
+  vector-name:
+    description: Named dense vector to write. Empty = the collection's unnamed vector.
+    default: ""
+  embedding-model:
+    description: Model name sent to the OpenAI-compatible /embeddings endpoint; its output size must match the collection.
+    default: text-embedding-3-small
+  embedding-api-key:
+    description: Bearer token for the embeddings endpoint (optional for local servers such as Ollama).
+    default: ""
+  embedding-base-url:
+    description: Base URL of any OpenAI-compatible API (OpenAI, Azure OpenAI, Ollama, vLLM, LiteLLM, ...).
+    default: https://api.openai.com/v1
+  embedding-dimensions:
+    description: Optional `dimensions` request parameter (models that support shortened embeddings).
+    default: ""
+  include:
+    description: Gitignore-style globs to index (newline or comma separated). Default `**/*.md`.
+    default: ""
+  exclude:
+    description: Extra gitignore-style excludes, added to the built-in ones (node_modules/, vendor/, build/, ...). Use `!dir/` to re-include.
+    default: ""
+  max-tokens:
+    description: Token budget per chunk.
+    default: "512"
+  tokenizer:
+    description: tiktoken encoding used to measure the budget.
+    default: cl100k_base
+  seed:
+    description: Free-form string mixed into every hash. Change it to force re-chunking and re-embedding.
+    default: ""
+  full-reindex:
+    description: Rebuild every point of this repository/scope from scratch (re-embeds everything).
+    default: "false"
+  path:
+    description: Path of the checked-out repository inside the workspace.
+    default: "."
+
+outputs:
+  mode:
+    description: incremental, reconcile, full, noop or skipped.
+  commit:
+    description: Revision that was synchronized.
+  files-added:
+    description: Files indexed for the first time.
+  files-modified:
+    description: Changed files re-synchronized.
+  files-renamed:
+    description: Renamed files.
+  files-deleted:
+    description: Files whose points were removed.
+  chunks-embedded:
+    description: Chunks sent to the embedding model.
+  chunks-reused:
+    description: New points written with vectors reused from identical stored chunks.
+  chunks-deleted:
+    description: Stale points deleted.
+  state-written:
+    description: Whether the revision was recorded as indexed.
+
+runs:
+  using: docker
+  image: docker://ghcr.io/sm-th/indexer:v1
+  env:
+    QDRANT_URL: ${{ inputs.qdrant-url }}
+    QDRANT_API_KEY: ${{ inputs.qdrant-api-key }}
+    QMS_COLLECTION: ${{ inputs.collection }}
+    QMS_REPOSITORY: ${{ inputs.repository }}
+    QMS_SCOPE: ${{ inputs.scope }}
+    QMS_VECTOR_NAME: ${{ inputs.vector-name }}
+    QMS_EMBEDDING_MODEL: ${{ inputs.embedding-model }}
+    QMS_EMBEDDING_API_KEY: ${{ inputs.embedding-api-key }}
+    QMS_EMBEDDING_BASE_URL: ${{ inputs.embedding-base-url }}
+    QMS_EMBEDDING_DIMENSIONS: ${{ inputs.embedding-dimensions }}
+    QMS_INCLUDE: ${{ inputs.include }}
+    QMS_EXCLUDE: ${{ inputs.exclude }}
+    QMS_MAX_TOKENS: ${{ inputs.max-tokens }}
+    QMS_TOKENIZER: ${{ inputs.tokenizer }}
+    QMS_SEED: ${{ inputs.seed }}
+    QMS_FULL_REINDEX: ${{ inputs.full-reindex }}
+    QMS_PATH: ${{ inputs.path }}

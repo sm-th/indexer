@@ -1,0 +1,31 @@
+[project]
+name = "qdrant-md-sync"
+version = "0.1.0"
+description = "GitHub Action / CLI that keeps a repository's Markdown files synchronized into a Qdrant collection"
+readme = "README.md"
+authors = [
+    { name = "Andy Smith", email = "me@andysmith.ai" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "chonkie>=1.7.0",
+    "httpx>=0.28.1",
+    "pathspec>=1.1.1",
+    "qdrant-client>=1.15",
+    "tiktoken>=0.14.0",
+]
+
+[project.scripts]
+qdrant-md-sync = "qdrant_md_sync.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.11.19,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+filterwarnings = ["ignore:Payload indexes have no effect in the local Qdrant"]
